@@ -30,7 +30,10 @@ class Noticeboard_Deactivator {
 	 * @since    1.0.0
 	 */
 	public static function deactivate() {
-
+		// Unregister the custom post type, so the rules are no longer in memory.
+		unregister_post_type( 'nb_announcements' );
+		// Clear the permalinks to remove our post type's rules from the database.
+		flush_rewrite_rules();
 	}
 
 }

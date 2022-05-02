@@ -30,7 +30,8 @@ class Noticeboard_Activator {
 	 * @since    1.0.0
 	 */
 	public static function activate() {
-
+		// Clear the permalinks after the registering custom post types.
+    	flush_rewrite_rules();
 	}
 
 }
