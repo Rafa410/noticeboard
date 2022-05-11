@@ -54,6 +54,8 @@ class Noticeboard_Admin {
 
 		add_action( 'init', array( $this, 'register_custom_post_types' ));
 		add_action( 'admin_menu', array( $this, 'add_plugin_to_admin_menu' ), 9 );
+		add_action( 'add_meta_boxes_nb_announcements', array( $this, 'setup_announcement_metaboxes' ));
+		add_action( 'save_post_nb_announcements', array( $this, 'save_announcement_metabox_data') );
 
 	}
 
@@ -159,5 +161,101 @@ class Noticeboard_Admin {
 	public function display_plugin_admin_dashboard() {
     	require_once 'partials/noticeboard-admin-display.php';
 	}
+
+	public function setup_announcement_metaboxes() {
+		add_meta_box(
+			'ng_announcement_metaboxes', 
+			'Camps personalitzats pels anuncis', 
+			array($this,'ng_announcement_metaboxes'), 
+			'nb_announcements',
+			'normal',
+			'high' 
+		);
+	}
+
+	public function ng_announcement_metaboxes($post) {
+		wp_nonce_field( 'nb_announcements_meta_box', 'nb_announcements_meta_box_nonce' );
+
+		?>
+
+		<div class="announcements_field_containers">
+			<ul class="announcements_data_metabox">
+				<li>
+					<label for="announcement_summary"><?= __( 'Resum', 'noticeboard' ) ?></label>
+					<textarea 
+						name="announcement_summary" 
+						id="announcement_summary"><?= get_post_meta( $post->ID, 'announcement_summary', true ); ?></textarea>
+					<small><?= __( 'Si no s\'introdueix un resum, es generarà automàticament a partir del contingut.', 'noticeboard' ) ?></small>
+				</li>
+				<li>
+					<label for="announcement_link"><?= __( 'Enllaç', 'noticeboard' ) ?></label>
+					<input 
+						type="url" 
+						name="announcement_link" 
+						id="announcement_link" 
+						value="<?= get_post_meta( $post->ID, 'announcement_link', true ); ?>" 
+						placeholder="https://www.example.com">
+						<small><?= __( 'Per defecte és fa servir l\'enllaç de l\'anunci', 'noticeboard' ) ?></small>
+				</li>
+				<li>
+					<label for="announcement_link_text"><?= __( 'Text de l\'enllaç', 'noticeboard' ) ?></label>
+					<input 
+						type="text" 
+						name="announcement_link_text" 
+						id="announcement_link_text" 
+						value="<?= get_post_meta( $post->ID, 'announcement_link_text', true ); ?>" 
+						placeholder="<?= __( 'Més info', 'noticeboard' ) ?>">
+				</li>
+			</ul>
+		</div>
+
+		<?php
+	
+	}
+
+	function save_announcement_metabox_data( $post_id ) {
+		/*
+		 * We need to verify this came from our screen and with proper authorization,
+		 * because the save_post action can be triggered at other times
+		 */
+	
+		// Check if our nonce is set
+		if ( ! isset( $_POST['nb_announcements_meta_box_nonce'] ) ) {
+			return;
+		}
+
+		// Verify that the nonce is valid
+		if ( ! wp_verify_nonce( $_POST['nb_announcements_meta_box_nonce'], 'nb_announcements_meta_box' ) ) {
+			return;
+		}
+
+		// If this is an autosave, our form has not been submitted, so we don't want to do anything
+		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
+			return;
+		}
+
+		// Check the user's permissions
+		if ( ! current_user_can( 'edit_post', $post_id ) ) {
+			return;
+		}
+		
+		// Make sure that it is set
+		if ( !isset( $_POST['announcement_summary'] ) || !isset( $_POST['announcement_link'] ) || !isset( $_POST['announcement_link_text'] ) ) {
+			return;
+		}
+		
+		/* Now it's safe to save the data */
+
+		// Sanitize user input.
+		$summary = sanitize_textarea_field( $_POST['announcement_summary']);
+		$link = sanitize_url( $_POST['announcement_link'] );
+		$link_text = sanitize_text_field( $_POST['announcement_link_text'] );
+
+		// Update the meta field in the database
+		update_post_meta( $post_id, 'announcement_summary', $summary );
+		update_post_meta( $post_id, 'announcement_link', $link );
+		update_post_meta( $post_id, 'announcement_link_text', $link_text );
+	}
+
 
 }

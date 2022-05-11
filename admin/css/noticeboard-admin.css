@@ -2,3 +2,16 @@
  * All of the CSS for your admin-specific functionality should be
  * included in this file.
  */
+
+ .announcements_data_metabox input, .announcements_data_metabox textarea {
+    width: 100%;
+ }
+
+ .announcements_data_metabox li {
+    margin-bottom: 0.75rem;
+}
+
+.announcements_data_metabox small {
+    color: #6c757d;
+}
+
