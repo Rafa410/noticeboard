@@ -129,6 +129,7 @@ class Noticeboard_Admin {
 			'has_archive' 	=> false,
 			'menu_icon' 	=> 'dashicons-megaphone',
 			'rewrite'     	=> array( 'slug' => 'announcements' ),
+			'show_in_rest' 	=> true,
 		);
 		
 		register_post_type( 'nb_announcements', $args );
