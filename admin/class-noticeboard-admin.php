@@ -203,7 +203,7 @@ class Noticeboard_Admin {
 						type="text" 
 						name="announcement_link_text" 
 						id="announcement_link_text" 
-						value="<?= get_post_meta( $post->ID, 'announcement_link_text', true ); ?>" 
+						value="<?= get_post_meta( $post->ID, 'announcement_link_text', true ) ?: __( 'Més info', 'noticeboard' ) ?>" 
 						placeholder="<?= __( 'Més info', 'noticeboard' ) ?>">
 				</li>
 			</ul>
