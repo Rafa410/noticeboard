@@ -112,16 +112,16 @@ class Noticeboard_Admin {
 	 */
 	public function register_custom_post_types() {
 		$labels = array(
-			'name' 					=> __( 'Announcements', 'noticeboard' ),
-			'singular_name' 		=> __( 'Announcement', 'noticeboard' ),
-			'add_new' 				=> __( 'Add Announcement', 'noticeboard' ),
-			'add_new_item' 			=> __( 'Add New Announcement', 'noticeboard' ),
-			'edit_item' 			=> __( 'Edit Announcement', 'noticeboard' ),
-			'new_item' 				=> __( 'New Announcement', 'noticeboard' ),
-			'view_item' 			=> __( 'View Announcement', 'noticeboard' ),
-			'search_items' 			=> __( 'Search Announcement', 'noticeboard' ),
-			'not_found' 			=> __( 'No Announcements found', 'noticeboard' ),
-			'not_found_in_trash'	=> __( 'No Announcements found in trash', 'noticeboard' ),
+			'name' 					=> __( 'Anuncis', 'noticeboard' ),
+			'singular_name' 		=> __( 'Anunci', 'noticeboard' ),
+			'add_new' 				=> __( 'Afegir anunci', 'noticeboard' ),
+			'add_new_item' 			=> __( 'Afegir nou anunci', 'noticeboard' ),
+			'edit_item' 			=> __( 'Editar anunci', 'noticeboard' ),
+			'new_item' 				=> __( 'Nou anunci', 'noticeboard' ),
+			'view_item' 			=> __( 'Veure anunci', 'noticeboard' ),
+			'search_items' 			=> __( 'Cercar anunci', 'noticeboard' ),
+			'not_found' 			=> __( 'No s\'han trobat anuncis', 'noticeboard' ),
+			'not_found_in_trash'	=> __( 'No s\'han trobat anuncis a la paperera', 'noticeboard' ),
 		);
 		$args = array(
 			'labels' 		=> $labels,
@@ -130,7 +130,7 @@ class Noticeboard_Admin {
 			'supports' 		=> array( 'title', 'editor', 'custom_fields'),
 			'has_archive' 	=> false,
 			'menu_icon' 	=> 'dashicons-megaphone',
-			'rewrite'     	=> array( 'slug' => 'announcements' ),
+			'rewrite'     	=> array( 'slug' => _x( 'anuncis', 'slug', 'noticeboard' ) ),
 			'show_in_rest' 	=> true,
 		);
 		
@@ -165,7 +165,7 @@ class Noticeboard_Admin {
 	public function setup_announcement_metaboxes() {
 		add_meta_box(
 			'ng_announcement_metaboxes', 
-			'Camps personalitzats pels anuncis', 
+			__( 'Camps personalitzats pels anuncis', 'noticeboard' ), 
 			array($this,'ng_announcement_metaboxes'), 
 			'nb_announcements',
 			'normal',
