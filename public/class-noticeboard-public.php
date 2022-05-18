@@ -101,6 +101,13 @@ class Noticeboard_Public {
 	}
 
 	/**
+	 * Include Slimdown.php library to parse markdown
+	 */
+	public function slimdown_init() {
+		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'vendor/Slimdown/Slimdown.php';
+	}
+
+	/**
 	 * Register shortcodes
 	 *
 	 * @since    1.0.0
@@ -120,11 +127,29 @@ class Noticeboard_Public {
 
 		$atts = shortcode_atts( array(
 			'limit' => 4,
+			'source' => 'wp', // Or 'nextcloud'
 		), $atts, 'latest_announcements' );
 
+		if ( $atts['source'] === 'nextcloud' ) {
+			$output = $this->get_nextcloud_announcements( $atts['limit'] );
+		} else {
+			$output = $this->get_wp_announcements( $atts['limit'] );
+		}
+
+		return $output;
+	}
+
+	/**
+	 * Get WP announcements
+	 * 
+	 * @param int $limit Number of announcements to get
+	 * 
+	 * @return string
+	 */
+	function get_wp_announcements( $limit ) {
 		$args = array(
 			'post_type' => 'nb_announcements',
-			'posts_per_page' => $atts['limit'],
+			'posts_per_page' => $limit,
 			'orderby' => 'date',
 			'order' => 'DESC',
 		);
@@ -185,5 +210,118 @@ class Noticeboard_Public {
 
 		return $output;
 	}
+
+	/**
+	 * Get Nextcloud announcements from REST API
+	 * 
+	 * @param int $limit Number of announcements to get
+	 * 
+	 * @return string
+	 */
+	function get_nextcloud_announcements( $limit ) {
+
+		// Load Slimdown Markdown parser
+		$this->slimdown_init();
+ 
+		// Get API params from plugin settings page
+		$url = get_option( 'noticeboard_nextcloud_url_setting' );
+		$user = get_option( 'noticeboard_nextcloud_user_setting' );
+		$password = get_option( 'noticeboard_nextcloud_password_setting' );
+		$url = trailingslashit( $url ) . 'ocs/v2.php/apps/announcementcenter/api/v1/announcements';
+
+		$args = array(
+			'headers' => array(
+				'Authorization' => 'Basic ' . base64_encode( $user . ':' . $password ),
+				'OCS-APIRequest' => true,
+			),
+		);
+
+		$response = wp_remote_get( $url, $args );
+
+		if ( is_wp_error( $response ) ) {
+			return '<p class="text-danger">' . $response->get_error_message() . '</p>';
+		}
+
+		$body = $response['body'];
+
+		$xml = simplexml_load_string( $body );
+
+		// echo '<pre>' . print_r($xml, true) . '</pre>'; // Debug
+
+		if ( $xml === false ) {
+			return '<p>' . __( 'No s\'han trobat anuncis', 'noticeboard' ) . '</p>';
+		}
+
+		$output = '<div class="announcements-list p-3">';
+
+
+		/** Example XML response from API  **/
+		// SimpleXMLElement Object
+		// (
+		// 	[meta] => SimpleXMLElement Object
+		// 		(
+		// 			[status] => ok
+		// 			[statuscode] => 200
+		// 			[message] => OK
+		// 		)
+		// 	[data] => SimpleXMLElement Object
+		// 		(
+		// 			[element] => SimpleXMLElement Object
+		// 				(
+		// 					[id] => 5
+		// 					[author_id] => superadmin
+		// 					[author] => superadmin
+		// 					[time] => 1650843974
+		// 					[subject] => Lorem ipsum
+		// 					[message] => Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+		// 					[groups] => SimpleXMLElement Object
+		// 						(
+		// 							[element] => SimpleXMLElement Object
+		// 								(
+		// 									[id] => everyone
+		// 									[name] => everyone
+		// 								)
+		// 						)
+		// 					[comments] => 0
+		// 					[notifications] => 1
+		// 				)
+		// 		)
+		// )
+
+		foreach ( $xml->data->element as $announcement ) {
+			$excerpt_markdown = substr($announcement->message, 0, 165); // Limit excerpt to 165 characters
+			$excerpt_markdown = substr($excerpt_markdown, 0, strrpos($excerpt_markdown, ' ')) . '...'; // Avoid breaking last word
+			$excerpt_html = Slimdown::render( $excerpt_markdown ); // TODO: Use wp_kses() to sanitize output
+
+			$content = Slimdown::render( $announcement->message );
+
+			ob_start();
+			?>
+
+			<article class="announcement" id="announcement-<?= $announcement->id ?>">
+
+				<header class="entry-header">
+					<h4 class="entry-title fs-6 fw-bold">
+						<?= $announcement->subject; ?>
+					</h4>
+				</header>
+
+				<div class="entry-content">
+					<?= $excerpt_html ?>
+				</div>
+
+			</article>
+
+			<?php
+			
+			$output .= ob_get_clean();
+
+		}
+
+		$output .= '</div>';
+
+		return $output;
+
+	}		
 
 }

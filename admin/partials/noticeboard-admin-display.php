@@ -14,5 +14,5 @@
 ?>
 
 <div class="wrap">
-	<h2><?= esc_html( get_admin_page_title() ); ?></h2>
+	<h2>Taulell d'anuncis</h2>
 </div>
