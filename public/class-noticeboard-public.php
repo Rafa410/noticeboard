@@ -126,7 +126,7 @@ class Noticeboard_Public {
 	function shortcode_announcements_handler( $atts ) {
 
 		$atts = shortcode_atts( array(
-			'limit' => 4,
+			'limit' => 4, // Maximum number of announcements to show
 			'source' => 'wp', // Or 'nextcloud'
 		), $atts, 'latest_announcements' );
 
@@ -224,10 +224,10 @@ class Noticeboard_Public {
 		$this->slimdown_init();
  
 		// Get API params from plugin settings page
-		$url = get_option( 'noticeboard_nextcloud_url_setting' );
+		$base_url = get_option( 'noticeboard_nextcloud_url_setting' );
 		$user = get_option( 'noticeboard_nextcloud_user_setting' );
 		$password = get_option( 'noticeboard_nextcloud_password_setting' );
-		$url = trailingslashit( $url ) . 'ocs/v2.php/apps/announcementcenter/api/v1/announcements';
+		$url = trailingslashit( $base_url ) . 'ocs/v2.php/apps/announcementcenter/api/v1/announcements';
 
 		$args = array(
 			'headers' => array(

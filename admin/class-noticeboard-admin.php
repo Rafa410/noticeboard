@@ -125,14 +125,16 @@ class Noticeboard_Admin {
 			'not_found_in_trash'	=> __( 'No s\'han trobat anuncis a la paperera', 'noticeboard' ),
 		);
 		$args = array(
-			'labels' 		=> $labels,
-			'public' 		=> true,
-			'show_in_menu'	=> $this->plugin_name,
-			'supports' 		=> array( 'title', 'editor', 'custom_fields'),
-			'has_archive' 	=> false,
-			'menu_icon' 	=> 'dashicons-megaphone',
-			'rewrite'     	=> array( 'slug' => _x( 'anuncis', 'slug', 'noticeboard' ) ),
-			'show_in_rest' 	=> true,
+			'labels' 		=> $labels, 									// Specific labels for this post type, e.g. Plugin name
+			'public' 		=> true, 										// Whether or not this post type is exposed to the public
+			'show_in_menu'	=> $this->plugin_name, 							// Where to show this post type in the admin menu
+			'supports' 		=> array( 'title', 'editor', 'custom_fields'),	// Features this post type supports
+			'has_archive' 	=> false, 										// We don't need an archive since we build our own templates using The Loop
+			'menu_icon' 	=> 'dashicons-megaphone', 						// Icon to use for this post type in the admin menu
+			'rewrite'     	=> array(									
+				'slug' 		=> _x( 'anuncis', 'slug', 'noticeboard' )			// Custom slug (URL) for this post type
+			),
+			'show_in_rest' 	=> true, 										// Allow Gutenberg editor to use this post type
 		);
 		
 		register_post_type( 'nb_announcements', $args );
