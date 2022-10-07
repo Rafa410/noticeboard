@@ -158,50 +158,56 @@ class Noticeboard_Public {
 
 		$output = '<div class="announcements-list p-3">';
 
-		while ( $query->have_posts() ) {
-			$query->the_post();
+		if ( $query->have_posts() ) {
 
-			$permalink = get_post_meta( get_the_ID(), 'announcement_link', true ) ?: get_permalink();
-			$permalink_text = get_post_meta( get_the_ID(), 'announcement_link_text', true );
-			$excerpt = get_post_meta( get_the_ID(), 'announcement_summary', true );
+			while ( $query->have_posts() ) {
+				$query->the_post();
 
-			if ( ! $excerpt ) {
-				$excerpt = get_the_excerpt();
-				$excerpt = substr($excerpt, 0, 165); // Limit excerpt to 165 characters
-				$excerpt = substr($excerpt, 0, strrpos($excerpt, ' ')) . '...'; // Avoid breaking last word
+				$permalink = get_post_meta( get_the_ID(), 'announcement_link', true ) ?: get_permalink();
+				$permalink_text = get_post_meta( get_the_ID(), 'announcement_link_text', true );
+				$excerpt = get_post_meta( get_the_ID(), 'announcement_summary', true );
+
+				if ( ! $excerpt ) {
+					$excerpt = get_the_excerpt();
+					$excerpt = substr($excerpt, 0, 165); // Limit excerpt to 165 characters
+					$excerpt = substr($excerpt, 0, strrpos($excerpt, ' ')) . '...'; // Avoid breaking last word
+				}
+
+				ob_start();
+				?>
+
+				<article class="announcement" id="announcement-<?php the_ID(); ?>">
+
+					<header class="entry-header">
+						<h4 class="entry-title fs-6">
+							<a class="link-dark text-decoration-none fw-bold" href="<?= esc_url( $permalink ) ?>">
+								<?= get_the_title(); ?>
+							</a>
+						</h4>
+					</header>
+
+					<div class="entry-content">
+						<?= $excerpt ?>
+					</div>
+
+					<?php if ( $permalink_text ) : ?>
+						<footer class="entry-footer mt-2">
+							<a href="<?= esc_url( $permalink ) ?>" class="read-more btn btn-sm btn-outline-dark fw-bold">
+								<?= get_post_meta( get_the_ID(), 'announcement_link_text', true ) ?>
+							</a>
+						</footer>
+					<?php endif; ?>
+
+				</article>
+
+				<?php
+				
+				$output .= ob_get_clean();
+
 			}
 
-			ob_start();
-			?>
-
-			<article class="announcement" id="announcement-<?php the_ID(); ?>">
-
-				<header class="entry-header">
-					<h4 class="entry-title fs-6">
-						<a class="text-decoration-none fw-bold" href="<?= esc_url( $permalink ) ?>">
-							<?= get_the_title(); ?>
-						</a>
-					</h4>
-				</header>
-
-				<div class="entry-content">
-					<?= $excerpt ?>
-				</div>
-
-				<?php if ( $permalink_text ) : ?>
-					<footer class="entry-footer mt-2 text-end">
-						<a href="<?= esc_url( $permalink ) ?>" class="btn btn-sm btn-secondary link-primary fw-bold">
-							<?= get_post_meta( get_the_ID(), 'announcement_link_text', true ) ?>
-						</a>
-					</footer>
-				<?php endif; ?>
-
-			</article>
-
-			<?php
-			
-			$output .= ob_get_clean();
-
+		} else {
+			$output .= '<small class="d-block text-center fw-light text-muted ">' . __( 'No s\'han trobat anuncis recents', 'noticeboard' ) . '</small>';
 		}
 
 		$output .= '</div>';
