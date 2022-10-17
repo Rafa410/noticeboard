@@ -207,7 +207,7 @@ class Noticeboard_Public {
 			}
 
 		} else {
-			$output .= '<small class="d-block text-center fw-light text-muted ">' . __( 'No s\'han trobat anuncis recents', 'noticeboard' ) . '</small>';
+			$output .= '<small class="d-block text-center fw-light">' . __( 'No s\'han trobat anuncis recents', 'noticeboard' ) . '</small>';
 		}
 
 		$output .= '</div>';
