@@ -149,7 +149,7 @@ class Noticeboard_Admin {
 		add_menu_page( 
 			$this->plugin_name, 
 			__( 'Taulell d\'anuncis', 'noticeboard' ),
-			'administrator',
+			'edit_posts',
 			$this->plugin_name,
 			array( $this, 'display_plugin_admin_dashboard' ),
 			'dashicons-megaphone',
