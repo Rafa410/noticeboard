@@ -52,7 +52,8 @@ class Noticeboard_Admin {
 		$this->plugin_name = $plugin_name;
 		$this->version = $version;
 
-		add_action( 'init', array( $this, 'register_custom_post_types' ));
+		add_action( 'init', array( $this, 'register_custom_post_types' ) );
+		add_action( 'init', array( $this, 'filter_settings_value' ) );
 		add_action( 'admin_menu', array( $this, 'add_plugin_to_admin_menu' ), 9 );
 		add_action( 'admin_init', array( $this, 'register_and_build_fields' ));
 		add_action( 'add_meta_boxes_nb_announcements', array( $this, 'setup_announcement_metaboxes' ));
@@ -141,6 +142,13 @@ class Noticeboard_Admin {
 	}
 
 	/**
+	 * Filter the value of hidden fields to use the default value on update.
+	 */
+	function filter_settings_value() {
+		add_filter( 'pre_update_option_noticeboard_nextcloud_settings', 'noticeboard_filter_nextcloud_settings', 10, 2 );
+	}
+
+	/**
 	 * Add the admin menu for the plugin
 	 * 
 	 * @since 1.0.0
@@ -197,19 +205,24 @@ class Noticeboard_Admin {
 	public function admin_settings_messages( $error_message ) {
          switch ( $error_message ) {
              case '1':
-				$message = __( 'S\'ha produït un error al guardar les opcions. Si us plau, intenta-ho de nou. Si el problema continua, posa\'t amb l\'administrador del lloc . ', 'noticeboard' );
+				$message = __( 'S\'ha produït un error al guardar les opcions. Si us plau, intenta-ho de nou. Si el problema continua, posa\'t en contacte amb l\'administrador del lloc.', 'noticeboard' );
 				$err_code = esc_attr( 'noticeboard_nextcloud_url_setting' );
 				$setting_field = 'noticeboard_nextcloud_url_setting';
 				break;
 			case '2':
-				$message = __( 'S\'ha produït un error al guardar les opcions. Si us plau, intenta-ho de nou. Si el problema continua, posa\'t amb l\'administrador del lloc . ', 'noticeboard' );
+				$message = __( 'S\'ha produït un error al guardar les opcions. Si us plau, intenta-ho de nou. Si el problema continua, posa\'t en contacte amb l\'administrador del lloc.', 'noticeboard' );
 				$err_code = esc_attr( 'noticeboard_nextcloud_user_setting' );                 
 				$setting_field = 'noticeboard_nextcloud_user_setting';                 
 				break;
 			case '3':
-				$message = __( 'S\'ha produït un error al guardar les opcions. Si us plau, intenta-ho de nou. Si el problema continua, posa\'t amb l\'administrador del lloc . ', 'noticeboard' );
+				$message = __( 'S\'ha produït un error al guardar les opcions. Si us plau, intenta-ho de nou. Si el problema continua, posa\'t en contacte amb l\'administrador del lloc.', 'noticeboard' );
 				$err_code = esc_attr( 'noticeboard_nextcloud_password_setting' );                 
 				$setting_field = 'noticeboard_nextcloud_password_setting';                 
+				break;
+			case '4':
+				$message = __( 'S\'ha produït un error al guardar les opcions. Si us plau, intenta-ho de nou. Si el problema continua, posa\'t en contacte amb l\'administrador del lloc.', 'noticeboard' );
+				$err_code = esc_attr( 'noticeboard_nextcloud_sync_frequency_setting' );
+				$setting_field = 'noticeboard_nextcloud_sync_frequency_setting';
 				break;
         }
         $type = 'error';
@@ -256,8 +269,8 @@ class Noticeboard_Admin {
 		);
 		add_settings_field(
 			'noticeboard_nextcloud_url_setting',
-			__( 'URL de Nextcloud', 'noticeboard' ),
-			array( $this, 'plugin_name_render_settings_field' ),
+			__( 'URL de la extranet', 'noticeboard' ),
+			array( $this, 'noticeboard_render_settings_field' ),
 			'noticeboard_nextcloud_settings',
 			'noticeboard_nextcloud_section',
 			$args
@@ -281,8 +294,8 @@ class Noticeboard_Admin {
 		);
 		add_settings_field(
 			'noticeboard_nextcloud_user_setting',
-			__( 'Usuari de Nextcloud', 'noticeboard' ),
-			array( $this, 'plugin_name_render_settings_field' ),
+			__( 'Usuari', 'noticeboard' ),
+			array( $this, 'noticeboard_render_settings_field' ),
 			'noticeboard_nextcloud_settings',
 			'noticeboard_nextcloud_section',
 			$args
@@ -297,6 +310,7 @@ class Noticeboard_Admin {
 		$args = array (
 			'type'      => 'input',
 			'subtype'   => 'password',
+			'hide_value' => true,
 			'id'    => 'noticeboard_nextcloud_password_setting',
 			'name'      => 'noticeboard_nextcloud_password_setting',
 			'required' => false,
@@ -306,8 +320,8 @@ class Noticeboard_Admin {
 		);
 		add_settings_field(
 			'noticeboard_nextcloud_password_setting',
-			__( 'Contrasenya de Nextcloud', 'noticeboard' ),
-			array( $this, 'plugin_name_render_settings_field' ),
+			__( 'Contrasenya', 'noticeboard' ),
+			array( $this, 'noticeboard_render_settings_field' ),
 			'noticeboard_nextcloud_settings',
 			'noticeboard_nextcloud_section',
 			$args
@@ -315,6 +329,40 @@ class Noticeboard_Admin {
 		register_setting(
 			'noticeboard_nextcloud_settings',
 			'noticeboard_nextcloud_password_setting'
+		);
+
+		// Nextcloud sync frequency
+		unset($args);
+		$interval_seconds = array(
+			'900' => sprintf( _n( '%s minut', '%s minuts', 15, 'noticeboard' ), '15' ),
+			'1800' => sprintf( _n( '%s minut', '%s minuts', 30, 'noticeboard' ), '30' ),
+			'3600' => sprintf( _n( '%s hora', '%s hores', 1, 'noticeboard' ), '1' ),
+			'7200' => sprintf( _n( '%s hora', '%s hores', 2, 'noticeboard' ), '2' ),
+			'14400' => sprintf( _n( '%s hora', '%s hores', 4, 'noticeboard' ), '4' ),
+			'28800' => sprintf( _n( '%s hora', '%s hores', 8, 'noticeboard' ), '8' ),
+			'86400' => sprintf( _n( '%s dia', '%s dies', 1, 'noticeboard' ), '1' ),
+		);
+		$args = array (
+			'type'      => 'select',
+			'id'    => 'noticeboard_nextcloud_sync_frequency_setting',
+			'name'      => 'noticeboard_nextcloud_sync_frequency_setting',
+			'required' => false,
+			'get_options_list' => $interval_seconds,
+			'default' => (string) HOUR_IN_SECONDS,
+			'value_type' => 'normal',
+			'wp_data' => 'option'
+		);
+		add_settings_field(
+			'noticeboard_nextcloud_sync_frequency_setting',
+			__( 'Frequència de sincronització', 'noticeboard' ),
+			array( $this, 'noticeboard_render_settings_field' ),
+			'noticeboard_nextcloud_settings',
+			'noticeboard_nextcloud_section',
+			$args
+		);
+		register_setting(
+			'noticeboard_nextcloud_settings',
+			'noticeboard_nextcloud_sync_frequency_setting'
 		);
 
 	}
@@ -325,7 +373,7 @@ class Noticeboard_Admin {
 	 * @since 1.0.0
 	 */
 	function noticeboard_display_nextcloud_description() {
-		echo '<p>' . __( 'Aquestes opcions permeten ajustar els paràmetres que es fan servir amb l\'API de Nextcloud', 'noticeboard' ) . '</p>';
+		echo '<p>' . __( 'Aquestes opcions permeten ajustar els paràmetres que es fan servir amb l\'API de l\'extranet', 'noticeboard' ) . '</p>';
 	}
 
 	/**
@@ -334,40 +382,70 @@ class Noticeboard_Admin {
 	 * @since 1.0.0 
 	 * @param array $args Arguments for the field
 	 */
-	public function plugin_name_render_settings_field( $args ) {
+	public function noticeboard_render_settings_field( $args ) {
 		if ($args['wp_data'] == 'option') {
-				$wp_data_value = get_option( $args['name'] );
-			} elseif ( $args['wp_data'] == 'post_meta' ) {
-				$wp_data_value = get_post_meta( $args['post_id'], $args['name'], true );
-			}
+			$wp_data_value = get_option( $args['name'] );
+		} elseif ( $args['wp_data'] == 'post_meta' ) {
+			$wp_data_value = get_post_meta( $args['post_id'], $args['name'], true );
+		}
 
-			switch ( $args['type'] ) {
+		switch ( $args['type'] ) {
 
-				case 'input':
-					$value =  ( $args['value_type'] ==  'serialized') ? serialize( $wp_data_value ) : $wp_data_value;
-					 if ( $args['subtype'] != 'checkbox') {
-						$prependStart = ( isset( $args['prepend_value'] ) ) ? '<div class="input-prepend"> <span class="add-on">' . $args['prepend_value'] . '</span>' : '';
-						$prependEnd = ( isset( $args['prepend_value'] ) ) ? '</div>' : '';
-						$step = ( isset( $args['step'] ) ) ? 'step="' . $args['step'] . '"' : '';
-						$min = ( isset( $args['min'] ) ) ? 'min="' . $args['min'] . '"' : '';
-						$max = ( isset( $args['max'] ) ) ? 'max="' . $args['max'] . '"' : '';
-						if ( isset( $args['disabled'] ) ) {
-							// hide the actual input bc if it was just a disabled input the information saved in the database would be wrong - bc it would pass empty values and wipe the actual information
-							echo $prependStart . '<input type="' . $args['subtype'] . '" id="' . $args['id'] . '_disabled" ' . $step . ' ' . $max . ' ' . $min . ' name="' . $args['name'] . '_disabled" size="40" disabled value="' . esc_attr($value) . '" /><input type="hidden" id="' . $args['id'] . '" ' . $step . ' ' . $max . ' ' . $min . ' name="' . $args['name'] . '" size="40" value="' . esc_attr($value) . '" />' . $prependEnd;
-						} else {
-							echo $prependStart . '<input type="' . $args['subtype'] . '" id="' . $args['id'] . '" ' . $args['required'] . ' ' . $step . ' ' . $max . ' ' . $min . ' name="' . $args['name'] . '" size="40" value="' . esc_attr($value) . '" />' . $prependEnd;
-						}
-						/*<input required="required" ' . $disabled . ' type="number" step="any" id="' . $this->plugin_name . '_cost2" name="' . $this->plugin_name . '_cost2" value="' . esc_attr( $cost ) . '" size="25" /><input type="hidden" id="' . $this->plugin_name . '_cost" step="any" name="' . $this->plugin_name . '_cost" value="' . esc_attr( $cost ) . '" />*/
+			case 'input':
+				$value =  ( $args['value_type'] ==  'serialized') ? serialize( $wp_data_value ) : $wp_data_value;
+					if ( $args['subtype'] != 'checkbox') {
+					$prependStart = ( isset( $args['prepend_value'] ) ) ? '<div class="input-prepend"> <span class="add-on">' . $args['prepend_value'] . '</span>' : '';
+					$prependEnd = ( isset( $args['prepend_value'] ) ) ? '</div>' : '';
+					$step = ( isset( $args['step'] ) ) ? 'step="' . $args['step'] . '"' : '';
+					$min = ( isset( $args['min'] ) ) ? 'min="' . $args['min'] . '"' : '';
+					$max = ( isset( $args['max'] ) ) ? 'max="' . $args['max'] . '"' : '';
+					$hide_value = $args['hide_value'];
 
+					if ( isset( $args['disabled'] ) ) {
+						// hide the actual input bc if it was just a disabled input the information saved in the database would be wrong - bc it would pass empty values and wipe the actual information
+						echo $prependStart . '<input type="' . $args['subtype'] . '" id="' . $args['id'] . '_disabled" ' . $step . ' ' . $max . ' ' . $min . ' name="' . $args['name'] . '_disabled" size="40" disabled value="' . esc_attr($value) . '" /><input type="hidden" id="' . $args['id'] . '" ' . $step . ' ' . $max . ' ' . $min . ' name="' . $args['name'] . '" size="40" value="' . ( $hide_value ? '*****' : esc_attr($value) ) . '" />' . $prependEnd;
 					} else {
-						$checked = ($value) ? 'checked' : '';
-						echo '<input type="' . $args['subtype'] . '" id="' . $args['id'] . '" "' . $args['required'] . '" name="' . $args['name'] . '" size="40" value="1" ' . $checked . ' />';
+						echo $prependStart . '<input type="' . $args['subtype'] . '" id="' . $args['id'] . '" ' . $args['required'] . ' ' . $step . ' ' . $max . ' ' . $min . ' name="' . $args['name'] . '" size="40" value="' . ( $hide_value ? '*****' : esc_attr($value) ) . '" />' . $prependEnd;
 					}
-					break;
-				default:
-					break;
+					/*<input required="required" ' . $disabled . ' type="number" step="any" id="' . $this->plugin_name . '_cost2" name="' . $this->plugin_name . '_cost2" value="' . esc_attr( $cost ) . '" size="25" /><input type="hidden" id="' . $this->plugin_name . '_cost" step="any" name="' . $this->plugin_name . '_cost" value="' . esc_attr( $cost ) . '" />*/
+
+				} else {
+					$checked = ($value) ? 'checked' : '';
+					echo '<input type="' . $args['subtype'] . '" id="' . $args['id'] . '" "' . $args['required'] . '" name="' . $args['name'] . '" size="40" value="1" ' . $checked . ' />';
+				}
+				break;
+			case 'select':
+				$options = $args['get_options_list'];
+				$multiple = ( isset( $args['multiple'] ) ) ? 'multiple' : '';
+				$disabled = ( isset( $args['disabled'] ) ) ? 'disabled' : '';
+				$required = ( isset( $args['required'] ) ) ? 'required' : '';
+				$selected = ( $args['value_type'] ==  'serialized') ? unserialize( $wp_data_value ) : $wp_data_value;
+				$default = $args['default'] ?? '';
+
+				echo '<select id="' . $args['id'] . '" ' . $multiple . ' ' . $disabled . ' ' . $required . ' name="' . $args['name'] . '">';
+				foreach ( $options as $key => $option ) {
+					if ( $selected == $key || ( !$selected && $default == $key ) ) {
+						echo '<option value="' . $key . '" selected>' . $option . '</option>';
+					} else {
+						echo '<option value="' . $key . '">' . $option . '</option>';
+					}
+				}
+				echo '</select>';
+				break;
+			default:
+				break;
+		}
+	}
+
+	function noticeboard_filter_nextcloud_settings( $new_value, $old_value ) {
+		foreach ( $new_value as $key => $value ) {
+			if ( $value === '*****' ) {
+				$new_value[ $key ] = $old_value[ $key ];
 			}
 		}
+		return $new_value;
+	}
+
 
 	public function setup_announcement_metaboxes() {
 		add_meta_box(

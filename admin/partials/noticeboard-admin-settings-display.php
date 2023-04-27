@@ -17,7 +17,7 @@
 	<h2><?= __( 'Opcions del taulell d\'anuncis', 'noticeboard' ) ?></h2>
 	<?php settings_errors(); ?>
 	<form method="POST" action="options.php" class="card">
-		<h3><?= __( 'Paràmetres de Nextcloud', 'noticeboard' ) ?></h3>
+		<h3><?= __( 'Paràmetres de la extranet', 'noticeboard' ) ?></h3>
 		<?php
 			settings_fields( 'noticeboard_nextcloud_settings' );
 			do_settings_sections( 'noticeboard_nextcloud_settings' );
